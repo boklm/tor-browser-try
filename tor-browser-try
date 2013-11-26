@@ -1,0 +1,60 @@
+#!/bin/sh
+# vim: expandtab sw=4
+set -e
+
+[ $# -eq 1 ] || exit 1
+COMMIT="$1"
+[ -z "$hg" ] && hg=hg
+[ -z "$MOZILLA_HG_DIR" ] && MOZILLA_HG_DIR="$HOME/mozilla-try"
+
+# trychooser: http://trychooser.pub.build.mozilla.org/
+[ -z "$trychooser" ] &&
+    trychooser='try: -b o -e -p linux,linux64,linux64-st-an,macosx64,win32 -u all -t all'
+
+get_firefox_tag() {
+    local commit="$COMMIT"
+    while [ "${commit#FIREFOX_}" == "$commit" ]
+    do
+        commit=$(git describe --long --tags "$commit"^ | sed 's/-[^-]\+-[^-]\+$//')
+        if [ -z "$commit" ]
+        then
+            echo "Could not find FIREFOX_* tag" >&2
+            exit 2
+        fi
+    done
+    echo $commit
+}
+
+hg_clone() {
+    local rel=$(echo $1 | sed 's/FIREFOX_\([0-9]\+\)_.*/\1/')
+    local hg_dir="$MOZILLA_HG_DIR/mozilla-esr$rel"
+    if ! [ -d "$hg_dir" ]
+    then
+        $hg clone -v "https://hg.mozilla.org/releases/mozilla-esr$rel" \
+                     "$hg_dir"
+    fi
+    cd "$hg_dir"
+}
+
+hg_clean_mq() {
+    $hg qpop --all
+    for p in $($hg qunapplied)
+    do
+        $hg qdelete "$p"
+    done
+}
+
+firefox_tag=$(get_firefox_tag)
+patches_dir=$(mktemp -d)
+git format-patch -o "$patches_dir" "$firefox_tag..$COMMIT"
+hg_clone "$firefox_tag"
+hg_clean_mq
+$hg pull
+$hg update -C "$firefox_tag"
+for patch in $(echo "$patches_dir"/* | sort)
+do
+    $hg qimport -g -P "$patch"
+done
+$hg qnew -m "$trychooser" trychooser
+rm -Rf "$patches_dir"
+# $hg push -f ssh://hg.mozilla.org/try
