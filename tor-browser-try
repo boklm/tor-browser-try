@@ -2,10 +2,11 @@
 # vim: expandtab sw=4
 set -e
 
+basedir=$(dirname $0)
+echo basedir: $basedir
+. "$basedir/common"
 [ $# -eq 1 ] || exit 1
 COMMIT="$1"
-[ -z "$hg" ] && hg=hg
-[ -z "$MOZILLA_HG_DIR" ] && MOZILLA_HG_DIR="$HOME/mozilla-try"
 
 # trychooser: http://trychooser.pub.build.mozilla.org/
 [ -z "$trychooser" ] &&
@@ -27,7 +28,9 @@ get_firefox_tag() {
 
 hg_clone() {
     local rel=$(echo $1 | sed 's/FIREFOX_\([0-9]\+\)_.*/\1/')
-    local hg_dir="$MOZILLA_HG_DIR/mozilla-esr$rel"
+    hgrepo="mozilla-esr$rel"
+    lockfile "$lockdir/$hgrepo"
+    local hg_dir="$MOZILLA_HG_DIR/$hgrepo"
     if ! [ -d "$hg_dir" ]
     then
         $hg clone -v "https://hg.mozilla.org/releases/mozilla-esr$rel" \
@@ -57,4 +60,5 @@ do
 done
 $hg qnew -m "$trychooser" trychooser
 rm -Rf "$patches_dir"
-# $hg push -f ssh://hg.mozilla.org/try
+rm -f "$lockdir/$hgrepo"
+echo > "$inotifydir/$hgrepo"
