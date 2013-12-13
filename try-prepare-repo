@@ -3,7 +3,6 @@
 set -e
 
 basedir=$(dirname $0)
-echo basedir: $basedir
 . "$basedir/common"
 [ $# -eq 1 ] || exit 1
 COMMIT="$1"
