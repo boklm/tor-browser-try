@@ -1,0 +1,43 @@
+#!/usr/bin/perl -w
+use strict;
+use IO::CaptureOutput qw(capture_exec);
+use List::MoreUtils qw(uniq);
+
+sub branches_status {
+    my %res;
+    system('git checkout --detach -q');
+    my ($stdout, $stderr, $success, $exit_code) = capture_exec('git', 'show-ref', '--heads');
+    foreach (split /\n/, $stdout) {
+	my ($hash, $branch) = m/^([^\s]+)\s+refs\/heads\/(.*)$/;
+	$res{$branch} = $hash;
+    }
+    return \%res;
+}
+
+sub hashne {
+    !$_[0] || !$_[1] || $_[0] ne $_[1];
+}
+
+sub changed_branches {
+    my ($b1, $b2) = @_;
+    my @branches = uniq (keys %$b1, keys %$b2);
+    return [ (grep { hashne($b1->{$_}, $b2->{$_}) } @branches) ];
+}
+
+sub git_fetch {
+    my ($out, $err, $success, $exit) =
+	capture_exec('git', 'fetch', 'origin', '+refs/heads/*:refs/heads/*');
+    die "Error running git fetch: $err" unless $success;
+}
+
+my $before = branches_status();
+git_fetch();
+my $after = branches_status();
+my $changed = changed_branches($before, $after);
+print "Changed branches:\n", (map { "- $_\n" } @$changed), "\n" if @$changed;
+if (@ARGV) {
+    foreach my $branch (@$changed) {
+	print "Running ", join(' ', @ARGV, $branch), "\n";
+	system(@ARGV, $branch);
+    }
+}
