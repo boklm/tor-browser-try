@@ -1,3 +1,4 @@
+[ -z "$hgrepo" ] && hgrepo='mozilla-esr24'
 [ -z "$MOZILLA_HG_DIR" ] && MOZILLA_HG_DIR="$HOME/mozilla-try"
 [ -z "$hg" ] && hg=hg
 lockdir="$basedir/lock"

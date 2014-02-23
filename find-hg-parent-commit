@@ -1,0 +1,50 @@
+#!/usr/bin/perl -w
+
+# This script should be run from the tor-browser.git directory, and
+# takes a branch name as argument.
+# It will use the gecko-mapfile to find the first parent commit that is
+# available in mercurial, and print the git hash of this commit and the
+# corresponding mercurial commit assigned to ff_git_commit and
+# ff_hg_commit variables in shell script syntax so it can be used with
+# eval in a shell script.
+
+use strict;
+use File::Basename;
+
+sub read_file {
+    my ($filename) = @_;
+    open(my $fh, '<', $filename) or die "Cannot open $filename";
+    my @data = <$fh>;
+    close $fh;
+    return @data;
+}
+
+sub commits_map {
+    my @l = read_file(dirname($0) . '/gecko-mapfile');
+    my %r = map { (m/^([^ ]+) ([^ ]+)/) } @l;
+    return \%r;
+}
+
+sub get_commit_hash {
+    my ($branch, $n) = @_;
+    open(my $p, '-|', "git show -s --format=format:%H $branch~$n");
+    my $res = <$p>;
+    close $p;
+    return $res;
+}
+
+sub find_commit {
+    my ($branch) = @_;
+    my $map = commits_map;
+    my $i = 0;
+    while (1) {
+        my $h = get_commit_hash($branch, $i);
+        if ($map->{$h}) {
+            print "ff_git_commit=$h\nff_hg_commit=$map->{$h}";
+            exit 0;
+        }
+        $i++;
+    }
+}
+
+find_commit($ARGV[0]);

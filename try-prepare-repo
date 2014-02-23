@@ -26,29 +26,12 @@ done
 [ -z "$trychooser" ] &&
     trychooser='try: -b o -e -p linux,linux64,linux64-st-an,macosx64,win32 -u all -t all'
 
-get_firefox_tag() {
-    local commit="$COMMIT"
-    while [ "${commit#FIREFOX_}" == "$commit" ]
-    do
-        commit=$(git describe --long --tags "$commit"^ | sed 's/-[^-]\+-[^-]\+$//')
-        if [ -z "$commit" ]
-        then
-            echo "Could not find FIREFOX_* tag" >&2
-            exit 2
-        fi
-    done
-    echo $commit
-}
-
 hg_clone() {
-    local rel=$(echo $1 | sed 's/FIREFOX_\([0-9]\+\)_.*/\1/')
-    hgrepo="mozilla-esr$rel"
     lockfile "$lockdir/$hgrepo"
     local hg_dir="$MOZILLA_HG_DIR/$hgrepo"
     if ! [ -d "$hg_dir" ]
     then
-        $hg clone -v "https://hg.mozilla.org/releases/mozilla-esr$rel" \
-                     "$hg_dir"
+        $hg clone -v "https://hg.mozilla.org/releases/$hgrepo" "$hg_dir"
     fi
     cd "$hg_dir"
 }
@@ -61,13 +44,14 @@ hg_clean_mq() {
     done
 }
 
-firefox_tag=$(get_firefox_tag)
+wget -O"$basedir/gecko-mapfile" https://people.mozilla.org/~asasaki/vcs2vcs/gecko-dev/gecko-mapfile
+eval $($basedir/find-hg-parent-commit $COMMIT)
 patches_dir=$(mktemp -d)
-git format-patch -o "$patches_dir" "$firefox_tag..$COMMIT"
-hg_clone "$firefox_tag"
+git format-patch -o "$patches_dir" "$ff_git_commit..$COMMIT"
+hg_clone
 hg_clean_mq
 $hg pull
-$hg update -C "$firefox_tag"
+$hg update -C "$ff_hg_commit"
 for patch in $(echo "$patches_dir"/* | sort)
 do
     $hg qimport -g -P "$patch"
