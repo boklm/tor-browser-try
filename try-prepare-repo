@@ -61,4 +61,5 @@ rm -Rf "$patches_dir"
 [ -n "$rebase_onto" ] &&
     $hg rebase -d "$rebase_onto" -r qbase..qtip
 rm -f "$lockdir/$hgrepo"
+date +%s > "$MOZILLA_HG_DIR/$hgrepo.changed"
 echo > "$inotifydir/$hgrepo"
