@@ -61,6 +61,7 @@ $hg qnew -m "$trychooser" trychooser
 rm -Rf "$patches_dir"
 [ -n "$rebase_onto" ] &&
     $hg rebase -d "$rebase_onto" -r qbase..qtip
+$hg qfinish -a
 buildid=$($hg id -i)
 builddate=$(date +%s)
 cat > "$MOZILLA_HG_DIR/builds/$buildid.build" <<EOF
