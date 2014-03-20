@@ -47,6 +47,7 @@ hg_clean_mq() {
 wget -O"$basedir/gecko-mapfile" https://people.mozilla.org/~asasaki/vcs2vcs/gecko-dev/gecko-mapfile
 eval $($basedir/find-hg-parent-commit $COMMIT)
 patches_dir=$(mktemp -d)
+git_commit_hash=$(git show -s --format=format:%H $COMMIT)
 git format-patch -o "$patches_dir" "$ff_git_commit..$COMMIT"
 hg_clone
 hg_clean_mq
@@ -60,6 +61,14 @@ $hg qnew -m "$trychooser" trychooser
 rm -Rf "$patches_dir"
 [ -n "$rebase_onto" ] &&
     $hg rebase -d "$rebase_onto" -r qbase..qtip
-date +%s > "$MOZILLA_HG_DIR/$hgrepo.changed"
+buildid=$($hg id -i)
+builddate=$(date +%s)
+cat > "$MOZILLA_HG_DIR/builds/$buildid.build" <<EOF
+date: $builddate
+hgcommit: $buildid
+gitcommit: $git_commit_hash
+gitbranch: $COMMIT
+EOF
+echo "$builddate" > "$MOZILLA_HG_DIR/$hgrepo.changed"
 rm -f "$lockdir/$hgrepo"
 echo > "$inotifydir/$hgrepo"

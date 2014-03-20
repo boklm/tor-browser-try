@@ -3,3 +3,4 @@
 [ -z "$hg" ] && hg=hg
 lockdir="$basedir/lock"
 inotifydir="$basedir/inotify"
+mkdir -p "$MOZILLA_HG_DIR" "$MOZILLA_HG_DIR"/builds
