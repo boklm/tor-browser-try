@@ -1,14 +1,32 @@
 #!/bin/bash
-set -e
-try_hg_remote_dir=/home/boklm/mozilla-try/mozilla-esr24
-try_hg_local_dir=$HOME/mozilla-try/mozilla-esr24
+try_remote_dir=/home/boklm/mozilla-try
+try_local_dir=$HOME/mozilla-try
+builds_remote_dir=$try_remote_dir/builds
+builds_local_dir=$try_local_dir/builds
+try_hg_remote_dir=$try_remote_dir/mozilla-esr24
+try_hg_local_dir=$try_local_dir/mozilla-esr24
 
-mkdir -p $(dirname $try_hg_local_dir)
-last_submit=0
-[ -f "$try_hg_local_dir.changed" ] && last_submit=$(cat "$try_hg_local_dir.changed")
-rsync "$try_hg_remote_dir.changed" "$try_hg_local_dir.changed"
-[ a"$last_submit" == a$(cat "$try_hg_local_dir.changed") ] && exit 0
-rsync -avH --delete "$try_hg_remote_dir"/ "$try_hg_local_dir"
-echo "Pushing to Mozilla Try"
-cd "$try_hg_local_dir"
-hg push -f ssh://hg.mozilla.org/try
+submit_build() {
+    local buildid="$1"
+    rsync -avH --delete "$try_hg_remote_dir"/ "$try_hg_local_dir"
+    echo "Pushing $buildid to Mozilla Try"
+    cd "$try_hg_local_dir"
+    hg push -f -r "$buildid" ssh://hg.mozilla.org/try > \
+        "$builds_local_dir/$buildid.done" 2>&1
+}
+
+submit_builds() {
+    for build in $builds_remote_dir/*.build
+    do
+        buildid=$(basename $build | sed 's/\.build$//')
+        [ -f "$builds_local_dir/$buildid.done" ] && continue
+        submit_build $buildid
+    done
+}
+
+mkdir -p $(dirname $try_hg_local_dir) $builds_local_dir
+while true
+do
+    submit_builds
+    sleep 900
+done
