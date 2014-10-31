@@ -14,7 +14,7 @@ foreach my $build (@builds) {
     my $dt = DateTime->from_epoch(epoch => $build->{date});
     my $date = $dt->ymd . ' ' . $dt->hms;
     my $git_commit = "<a href=\"https://gitweb.torproject.org/tor-browser.git/commit/$build->{gitcommit}\">$date</a>";
-    my $results = "<a href=\"https://tbpl.mozilla.org/?tree=Try&rev=$build->{hgcommit}\">results</a>";
+    my $results = "<a href=\"https://treeherder.mozilla.org/#/jobs?repo=try&amp;revision=$build->{hgcommit}\">results</a>";
     my $files = "<a href=\"https://ftp.mozilla.org/pub/mozilla.org/firefox/try-builds/mikeperry\@torproject.org-$build->{hgcommit}/\">files</a>";
     $content .= "$git_commit - $results - $files<br />";
 }
