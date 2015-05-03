@@ -44,7 +44,7 @@ hg_clean_mq() {
     done
 }
 
-wget -O"$basedir/gecko-mapfile" https://people.mozilla.org/~asasaki/vcs2vcs/gecko-dev/gecko-mapfile
+wget -O"$basedir/gecko-mapfile" https://people.mozilla.org/~pmoore/vcs2vcs/gecko-dev/gecko-mapfile
 eval $($basedir/find-hg-parent-commit $COMMIT)
 patches_dir=$(mktemp -d)
 git_commit_hash=$(git show -s --format=format:%H $COMMIT)
