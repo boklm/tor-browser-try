@@ -48,20 +48,20 @@ wget -O"$basedir/gecko-mapfile" https://people.mozilla.org/~pmoore/vcs2vcs/gecko
 eval $($basedir/find-hg-parent-commit $COMMIT)
 patches_dir=$(mktemp -d)
 git_commit_hash=$(git show -s --format=format:%H $COMMIT)
-git format-patch -o "$patches_dir" "$ff_git_commit..$COMMIT"
+torbrowserpatch="$patches_dir/torbrowser.patch"
+echo 'Tor Browser changes' > "$torbrowserpatch"
+echo >> "$torbrowserpatch"
+git log "$ff_git_commit..$COMMIT" >> "$torbrowserpatch"
+git diff "$ff_git_commit..$COMMIT" >> "$torbrowserpatch"
 hg_clone
 hg_clean_mq
 $hg pull
 $hg update -C "$ff_hg_commit"
-for patch in $(echo "$patches_dir"/* | sort)
-do
-    $hg qimport -g -P "$patch"
-done
+$hg qimport -P "$torbrowserpatch"
 $hg qnew -m "$trychooser" trychooser
 rm -Rf "$patches_dir"
 [ -n "$rebase_onto" ] &&
     $hg rebase -d "$rebase_onto" -r qbase..qtip
-$hg qfinish -a
 buildid=$($hg id -i)
 builddate=$(date +%s)
 cat > "$MOZILLA_HG_DIR/builds/$buildid.build" <<EOF
