@@ -51,7 +51,7 @@ eval $($basedir/find-hg-parent-commit $COMMIT)
 patches_dir=$(mktemp -d)
 git_commit_hash=$(git show -s --format=format:%H $COMMIT)
 torbrowserpatch="$patches_dir/torbrowser.patch"
-echo 'Tor Browser changes' > "$torbrowserpatch"
+echo "Tor Browser changes: $COMMIT" > "$torbrowserpatch"
 echo >> "$torbrowserpatch"
 git log "$ff_git_commit..$COMMIT" >> "$torbrowserpatch"
 git diff "$ff_git_commit..$COMMIT" >> "$torbrowserpatch"
