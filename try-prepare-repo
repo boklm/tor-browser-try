@@ -24,7 +24,7 @@ done
 
 # trychooser: http://trychooser.pub.build.mozilla.org/
 [ -z "$trychooser" ] &&
-    trychooser='try: -b d -e -p linux,linux64,linux64-st-an -u reftest,crashtest,xpcshell,jsreftest,marionette,cppunit,jittests,mochitest-1,mochitest-2,mochitest-3,mochitest-4,mochitest-5,mochitest-bc -t none'
+    trychooser='try: -b d -f -p linux,linux64,linux64-st-an -u reftest,crashtest,xpcshell,jsreftest,marionette,cppunit,jittests,mochitest-1,mochitest-2,mochitest-3,mochitest-4,mochitest-5,mochitest-bc -t none'
 
 hg_clone() {
     lockfile "$lockdir/$hgrepo"
